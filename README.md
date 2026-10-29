@@ -4,7 +4,7 @@
 
 ![网站桌面预览](assets/preview.png)
 
-打开网站先展示D海研学队原始海报1秒，随后用0.85秒渐渐淡出，进入观测主页；提交材料、切换日期或筛选小组时不重复播放。主页使用提供的东方红2日落照片。两张图片都作为本地资源随源码保存，无需依赖外部图片链接。
+打开网站先完整展示D海研学队原始海报1.5秒，随后用1.5秒渐渐淡出，进入观测主页；提交材料、切换日期或筛选小组时不重复播放。主页使用提供的东方红2日落照片。两张图片都作为本地资源随源码保存，无需依赖外部图片链接。
 
 ## 作业安排
 
@@ -30,6 +30,41 @@
 每次最多20个文件，单个100MB，合计250MB。CTD任务必须同时有CTD和气象材料；空文件会被拒绝。文件按日期、任务和提交编号分别保存，同名文件不会相互覆盖。重新提交保留历史版本，进度以最新版本为准。系统只生成汇报文字，**不会自动向微信或其他群发消息**。
 
 资料库支持查看历史提交、下载原文件、打包单条提交和下载当天JSON清单。不同日期的任务和进度相互独立。
+
+## 上传后直接保存到GitHub
+
+当前默认使用GitHub作为材料存储，目标是`Pan-gao-1219/DFH2DATA`的 **observation-data** 分支。源码仍在main分支，上传数据不触发网站重新部署。
+
+- 只有GitHub确认提交成功，网页才显示“材料已保存”。网络或权限失败会报错，保留本次文件后可以重试。
+- 同一次提交的材料、记录和日期索引一次提交生效；多个小组同时上传时会重新合并最新索引，不覆盖其他小组的数据。
+- 原始材料在`uploads/日期/任务/提交编号/`，逐次记录在`records/`，日期索引在`indexes/`。记录、群汇报状态和文件都从GitHub读取，网站重启后可恢复。
+- 数据仓库目前是公开仓库，这是用户选择的存储范围；上传材料会公开。
+
+### Streamlit Cloud填写Secrets
+
+先在GitHub个人设置创建fine-grained PAT，仅选择DFH2DATA仓库，授予`Contents: Read and write`。`Metadata: Read-only`保持默认。仓库的Deploy keys是另一种SSH凭据，本网站API接入使用PAT。
+
+打开Streamlit应用的App settings → Secrets，填写下面内容，将token值替换成你的令牌：
+
+```toml
+storage_backend = "github"
+
+[github]
+repository = "Pan-gao-1219/DFH2DATA"
+branch = "observation-data"
+token = "这里替换成你的GitHub个人访问令牌"
+use_gh_cli = false
+```
+
+保存后重启应用。网页侧栏显示“GitHub仓库保存”；上传成功后点击“打开GitHub数据分支”即可核对原始材料。没有配置令牌时，网站允许读取公开材料，禁用上传。
+
+模板在`.streamlit/secrets.example.toml`。实际令牌只能保存在Streamlit Secrets、环境变量`MARINE_GITHUB_TOKEN`或本机被Git忽略的`.streamlit/secrets.toml`中，不能提交到源码仓库。
+
+本机已经登录GitHub CLI时，默认从现有登录凭据读取令牌到服务器内存，不打印、不另存文件；Cloud环境使用上面的Secrets配置。
+
+GitHub单文件有100MB限制，大量视频或持续增长的大型原始数据不适合长期存进Git仓库。本网站仍限制每次20个文件、单文件100MB、总计250MB。海上网络中断时GitHub模式不会假装上传成功；要离线暂存，可明确切换到下文的local模式，联网后重新提交。
+
+官方参考：[GitHub令牌设置](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)、[GitHub文件与API限制](https://docs.github.com/en/rest/git/blobs)。
 
 ## 本地启动
 
@@ -66,7 +101,7 @@ GitHub用于保存源码；GitHub Pages不能直接运行这个Python程序。
 
 点击Deploy后平台会生成实际的 `.streamlit.app` 链接。提交GitHub不等于已在Streamlit Cloud完成部署。
 
-**Community Cloud本地磁盘不是持久存储保证**：休眠、重启或重新部署可能清除本地上传文件和SQLite记录。短期预览可用，正式集中收集材料应使用下面带持久卷的服务器部署；若使用Cloud，请及时下载材料备份。应用不把上传文件或同学的观测数据提交到GitHub。
+默认的GitHub模式将材料与记录保存在GitHub数据分支，可以跨Cloud重启保留。若明确选择local模式，Community Cloud本地磁盘仍然没有持久存储保证。
 
 ### 服务器 / Docker（持久保存材料）
 
@@ -76,7 +111,7 @@ docker compose up -d --build
 
 访问服务器8501端口；公网正式使用时在反向代理配置HTTPS和访问权限。Docker命名卷 `marine-data` 持久保存数据库和文件，不要使用 `docker compose down -v` 删除数据卷。
 
-默认数据目录是项目下的`data/`，可通过`MARINE_DATA_DIR`设置为持久磁盘路径。备份时停止应用后完整复制数据目录，包含SQLite数据库和uploads文件夹。一个部署实例共享同一目录，支持多浏览器并发提交；不要把多个SQLite实例分散到不同机器上。
+GitHub模式在服务器和Docker上同样需要配置`MARINE_GITHUB_TOKEN`。如果需要本地离线保存，设置`MARINE_STORAGE=local`（或Secrets根级`storage_backend="local"`）。local模式数据目录是项目下的`data/`，可通过`MARINE_DATA_DIR`设置为持久磁盘路径。备份时停止应用后完整复制数据目录，包含SQLite数据库和uploads文件夹。一个local部署实例共享同一目录，支持多浏览器并发提交；不要把多个SQLite实例分散到不同机器上。
 
 本应用默认面向可信实习小组，未实现个人账号认证；不要把无访问限制的公网链接当作身份验证。
 

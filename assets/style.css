@@ -1,5 +1,5 @@
 /* The supplied ship photograph is the visual focus; controls stay native Streamlit. */
-.intro-screen{position:fixed;inset:0;z-index:999999;background:#faf8f4;display:flex;align-items:center;justify-content:center;opacity:1;animation:intro-fade .85s ease-in-out 1s forwards;}
+.intro-screen{position:fixed;inset:0;z-index:999999;background:#faf8f4;display:flex;align-items:center;justify-content:center;opacity:1;animation:intro-fade 1.5s ease-in-out 1.5s forwards;}
 .intro-screen img{display:block;width:100%;height:100%;object-fit:contain;}
 @keyframes intro-fade{from{opacity:1;visibility:visible;}to{opacity:0;visibility:hidden;}}
 @media(prefers-reduced-motion:reduce){.intro-screen{animation-duration:.01s;}}

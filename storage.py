@@ -18,7 +18,41 @@ MAX_SUBMISSION_BYTES = 250 * 1024 * 1024
 MAX_FILES = 20
 
 
+def validate_submission(observation_date, task_id, reporter, actual_time, station, notes, files, submission_id=None):
+    """Shared validation before a local or remote storage write."""
+    date.fromisoformat(observation_date)
+    task = TASK_BY_ID.get(task_id)
+    if not task or reporter not in GROUPS[task.group]["members"]:
+        raise ValueError("请选择该任务负责小组的汇报人。")
+    time.fromisoformat(actual_time)
+    if len(station) > 120 or len(notes) > 2000:
+        raise ValueError("站位最多120字，备注最多2000字。")
+    if not 1 <= len(files) <= MAX_FILES:
+        raise ValueError(f"每次请提交1—{MAX_FILES}个材料文件。")
+    total, categories = 0, set()
+    for name, content, category in files:
+        if not isinstance(content, bytes) or not content:
+            raise ValueError(f"{name} 是空文件，请检查后上传。")
+        if len(content) > MAX_FILE_BYTES:
+            raise ValueError(f"{name} 超过单个文件100MB限制。")
+        if category not in {"ctd", "weather", "data"}:
+            raise ValueError("材料分类无效。")
+        categories.add(category)
+        total += len(content)
+    if total > MAX_SUBMISSION_BYTES:
+        raise ValueError("本次材料总大小超过250MB，请分批整理后重新提交。")
+    if task.project == "ctd" and categories != {"ctd", "weather"}:
+        raise ValueError("请同时上传CTD材料和同步气象材料。")
+    if task.project != "ctd" and categories != {"data"}:
+        raise ValueError("材料分类与当前任务不符。")
+    return str(uuid.UUID(submission_id)) if submission_id else str(uuid.uuid4())
+
+
 class Store:
+    storage_label = "本机磁盘保存"
+    can_write = True
+    repository_url = None
+
     def __init__(self, root=None):
         self.root = Path(root or os.environ.get("MARINE_DATA_DIR") or Path(__file__).parent / "data").resolve()
         self.root.mkdir(parents=True, exist_ok=True)
@@ -96,34 +130,7 @@ class Store:
         return latest
 
     def submit(self, *, observation_date, task_id, reporter, actual_time, station="", notes="", files, submission_id=None):
-        # Re-validate all values before any database write or file creation.
-        date.fromisoformat(observation_date)
-        task = TASK_BY_ID.get(task_id)
-        if not task or reporter not in GROUPS[task.group]["members"]:
-            raise ValueError("请选择该任务负责小组的汇报人。")
-        time.fromisoformat(actual_time)
-        if len(station) > 120 or len(notes) > 2000:
-            raise ValueError("站位最多120字，备注最多2000字。")
-        if not 1 <= len(files) <= MAX_FILES:
-            raise ValueError(f"每次请提交1—{MAX_FILES}个材料文件。")
-        total = 0
-        categories = set()
-        for name, content, category in files:
-            if not isinstance(content, bytes) or not content:
-                raise ValueError(f"{name} 是空文件，请检查后上传。")
-            if len(content) > MAX_FILE_BYTES:
-                raise ValueError(f"{name} 超过单个文件100MB限制。")
-            if category not in {"ctd", "weather", "data"}:
-                raise ValueError("材料分类无效。")
-            categories.add(category)
-            total += len(content)
-        if total > MAX_SUBMISSION_BYTES:
-            raise ValueError("本次材料总大小超过250MB，请分批整理后重新提交。")
-        if task.project == "ctd" and categories != {"ctd", "weather"}:
-            raise ValueError("请同时上传CTD材料和同步气象材料。")
-        if task.project != "ctd" and categories != {"data"}:
-            raise ValueError("材料分类与当前任务不符。")
-        submission_id = str(uuid.UUID(submission_id)) if submission_id else str(uuid.uuid4())
+        submission_id = validate_submission(observation_date, task_id, reporter, actual_time, station, notes, files, submission_id)
         written = []
         with self.connection() as conn:
             conn.execute("BEGIN IMMEDIATE")

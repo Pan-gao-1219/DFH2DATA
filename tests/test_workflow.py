@@ -115,6 +115,7 @@ def test_file_integrity_checked(store):
 
 def test_dashboard_filter_and_upload_form(tmp_path, monkeypatch):
     from streamlit.testing.v1 import AppTest
+    monkeypatch.setenv("MARINE_STORAGE", "local")
     monkeypatch.setenv("MARINE_DATA_DIR", str(tmp_path / "ui"))
     app = AppTest.from_file(str(Path(__file__).parents[1] / "streamlit_app.py"), default_timeout=20).run()
     assert not app.exception
@@ -135,6 +136,7 @@ def test_dashboard_filter_and_upload_form(tmp_path, monkeypatch):
 
 def test_library_and_report_confirmation(tmp_path, monkeypatch):
     from streamlit.testing.v1 import AppTest
+    monkeypatch.setenv("MARINE_STORAGE", "local")
     monkeypatch.setenv("MARINE_DATA_DIR", str(tmp_path / "ui"))
     store = Store(tmp_path / "ui")
     row = submit(store)

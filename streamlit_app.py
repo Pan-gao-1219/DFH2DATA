@@ -9,7 +9,7 @@ from pathlib import Path
 import streamlit as st
 
 from observations import GROUPS, PROJECTS, TASKS, TASK_BY_ID, now_china, report_text, task_status
-from storage import Store
+from runtime_store import get_store
 
 ROOT = Path(__file__).parent
 st.set_page_config(page_title="东方红2 · 海上观测协作站", page_icon=":material/sailing:", layout="wide")
@@ -51,17 +51,25 @@ def render_report(record, store, key):
             try:
                 store.mark_reported(record["id"], person)
                 st.rerun()
-            except ValueError as exc:
+            except (ValueError, OSError) as exc:
                 st.error(str(exc))
 
 
 @st.dialog("提交观测材料", width="large", on_dismiss=dismiss_dialog)
 def upload_dialog(task_id, observation_date):
     task = TASK_BY_ID[task_id]
-    store = Store()
-    latest = store.latest(observation_date).get(task_id)
+    store = get_store()
+    try:
+        latest = store.latest(observation_date).get(task_id)
+    except (ValueError, OSError) as exc:
+        st.error(f"读取材料失败：{exc}")
+        return
     st.subheader(f"{task.time} · {task.title}")
     st.caption(f"{observation_date}  /  {task.group}组 · 组长 {GROUPS[task.group]['leader']}")
+    st.caption(f"保存位置：{store.storage_label}")
+    if not store.can_write:
+        st.error("尚未配置GitHub写入令牌，暂不能提交。请让管理员在网站Secrets中配置github.token。")
+        return
     if latest:
         st.success(f"材料已保存 · {len(latest['files'])} 个文件 · 提交人 {latest['reporter']}")
         render_report(latest, store, f"dialog_{latest['id']}")
@@ -91,7 +99,7 @@ def upload_dialog(task_id, observation_date):
             st.error("请先选择提交人。")
             return
         try:
-            with st.spinner("正在保存材料…"):
+            with st.spinner("正在保存材料，请等待确认成功…"):
                 store.submit(observation_date=observation_date, task_id=task_id, reporter=reporter,
                     actual_time=actual.strftime("%H:%M"), station=station, notes=notes,
                     files=[(file.name, file.getvalue(), category) for file, category in uploads], submission_id=nonce)
@@ -137,8 +145,17 @@ st.html(f"""<section class="hero" style="{photo_style}">
     </section>""")
 
 view = st.segmented_control("工作区", ["观测任务", "数据资料库", "值班与交接"], default="观测任务", key="workspace", label_visibility="collapsed") or "观测任务"
-store = Store()
-latest = store.latest(observation_date)
+store = get_store()
+st.sidebar.caption(f"保存位置：{store.storage_label}")
+if store.repository_url:
+    st.sidebar.link_button("打开GitHub数据分支", store.repository_url, icon=":material/cloud:", width="stretch")
+if not store.can_write:
+    st.warning("GitHub写入令牌尚未配置。当前可以查看已保存材料，配置Secrets后才能上传。")
+try:
+    latest = store.latest(observation_date)
+except (ValueError, OSError) as exc:
+    st.error(f"读取观测材料失败：{exc}")
+    st.stop()
 tasks = [task for task in TASKS if not group_filter or task.group == group_filter]
 uploaded = sum(task.id in latest for task in tasks)
 completed = sum(bool(latest.get(task.id, {}).get("reported_at")) for task in tasks)
@@ -202,8 +219,12 @@ if view == "观测任务":
 
 elif view == "数据资料库":
     st.subheader("数据资料库")
-    st.caption("按观测日期归档。每次重新提交均保留历史材料，上传文件不会随页面刷新丢失。")
-    records = [record for record in store.list_records(observation_date) if not group_filter or TASK_BY_ID[record["task_id"]].group == group_filter]
+    st.caption(f"按观测日期归档 · {store.storage_label}。每次重新提交均保留历史材料。")
+    try:
+        records = [record for record in store.list_records(observation_date) if not group_filter or TASK_BY_ID[record["task_id"]].group == group_filter]
+    except (ValueError, OSError) as exc:
+        st.error(f"读取资料库失败：{exc}")
+        st.stop()
     if not records:
         st.info("当前日期和小组还没有上传记录。请在“观测任务”中选择相应任务。", icon=":material/folder_open:")
     else:

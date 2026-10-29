@@ -5,6 +5,9 @@ services:
       - "8501:8501"
     volumes:
       - marine-data:/data
+    environment:
+      MARINE_STORAGE: ${MARINE_STORAGE:-github}
+      MARINE_GITHUB_TOKEN: ${MARINE_GITHUB_TOKEN:-}
     restart: unless-stopped
 volumes:
   marine-data:
