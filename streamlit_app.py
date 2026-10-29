@@ -12,7 +12,7 @@ from observations import GROUPS, PROJECTS, TASKS, TASK_BY_ID, now_china, report_
 from runtime_store import get_store
 
 ROOT = Path(__file__).parent
-st.set_page_config(page_title="东方红2 · 海上观测协作站", page_icon=":material/sailing:", layout="wide")
+st.set_page_config(page_title="东方红2 · 海上观测协作站", page_icon=":material/sailing:", layout="wide", initial_sidebar_state="collapsed")
 st.session_state.setdefault("dialog_task", None)
 st.session_state.setdefault("upload_nonce", str(uuid.uuid4()))
 st.session_state.setdefault("archive_download", None)
@@ -113,42 +113,33 @@ css = ROOT / "assets" / "style.css"
 if css.exists():
     st.html(f"<style>{css.read_text(encoding='utf-8')}</style>")
 
-# The one-second hold and fade happen in the browser, without blocking Python.
+# The 1.5-second hold and 1.5-second fade happen without blocking Python.
 # Session state prevents an upload, filter or report confirmation replaying it.
 if not st.session_state.intro_seen:
     st.html(f'<div class="intro-screen" aria-label="D海研学队开场海报"><img src="data:image/png;base64,{intro_image()}" alt="D海研学队：同舟探海，向海求知；五校同行，共赴山海。"></div>')
     st.session_state.intro_seen = True
 
-with st.sidebar:
-    st.markdown("### :material/sailing: 东方红2")
-    st.caption("海上观测 · 数据协作")
-    st.divider()
-    observation_date = st.date_input("观测日期", value=now_china().date(), key="observation_date").isoformat()
-    group_filter = st.selectbox("查看小组", [0, 1, 2, 3, 4], format_func=lambda g: "全部小组" if g == 0 else f"第 {g} 组", key="group_filter")
-    if st.button("刷新协作进度", icon=":material/refresh:", width="stretch"):
-        st.rerun()
-    st.divider()
-    st.markdown("**前班 · 1、2组**")
-    st.caption("02:00—05:30")
-    st.markdown("**后班 · 3、4组**")
-    st.caption("05:20—08:00")
-    st.info("05:20—05:30 交接\n\n1组 → 3组\n\n2组 → 4组", icon=":material/swap_horiz:")
-    st.caption("每次完成观测 → 上传材料 → 群内汇报")
-
 image = hero_image()
 photo_style = f"background-image:linear-gradient(90deg,rgba(5,24,39,.93) 0%,rgba(5,24,39,.52) 45%,rgba(5,24,39,.08) 100%),url(data:image/jpeg;base64,{image});" if image else ""
 st.html(f"""<section class="hero" style="{photo_style}">
     <div class="eyebrow">DONG FANG HONG 2 &nbsp; / &nbsp; FIELD OBSERVATIONS</div>
-    <h1>向海而行，<br>让每一份观测有迹可循。</h1>
-    <p>东方红2 · 海上观测协作站</p>
+    <h1>同舟探海，向海求知。</h1>
+    <p>D海研学队 · 东方红2观测协作站</p>
     <div class="hero-tags"><span>02:00 — 08:00</span><span>4个小组</span><span>17项作业</span></div>
     </section>""")
 
-view = st.segmented_control("工作区", ["观测任务", "数据资料库", "值班与交接"], default="观测任务", key="workspace", label_visibility="collapsed") or "观测任务"
+with st.container(key="filters"):
+    date_col, group_col = st.columns(2, gap="small", wrap=False)
+    observation_date = date_col.date_input("观测日期", value=now_china().date(), key="observation_date").isoformat()
+    group_filter = group_col.selectbox("查看小组", [0, 1, 2, 3, 4], format_func=lambda g: "全部小组" if g == 0 else f"第 {g} 组", key="group_filter")
+
+# Native bottom navigation stays within reach while scrolling the mobile timeline.
+with st.bottom:
+    with st.container(key="bottom_nav"):
+        view = st.segmented_control("工作区", ["观测任务", "数据资料库", "值班与交接"],
+            format_func=lambda value: {"观测任务": "观测任务", "数据资料库": "资料库", "值班与交接": "交接安排"}[value],
+            default="观测任务", required=True, key="workspace", width="stretch", label_visibility="collapsed", wrap=True)
 store = get_store()
-st.sidebar.caption(f"保存位置：{store.storage_label}")
-if store.repository_url:
-    st.sidebar.link_button("打开GitHub数据分支", store.repository_url, icon=":material/cloud:", width="stretch")
 if not store.can_write:
     st.warning("GitHub写入令牌尚未配置。当前可以查看已保存材料，配置Secrets后才能上传。")
 try:
@@ -159,63 +150,46 @@ except (ValueError, OSError) as exc:
 tasks = [task for task in TASKS if not group_filter or task.group == group_filter]
 uploaded = sum(task.id in latest for task in tasks)
 completed = sum(bool(latest.get(task.id, {}).get("reported_at")) for task in tasks)
-with st.container(horizontal=True, gap="medium"):
-    st.metric("计划作业", f"{len(tasks):02d}", border=True)
-    st.metric("已上传材料", f"{uploaded:02d}", border=True)
-    st.metric("待群汇报", f"{uploaded - completed:02d}", border=True)
-    st.metric("已全部完成", f"{completed:02d}", border=True)
-st.progress(completed / len(tasks), text=f"{observation_date} · 完成 {completed} / {len(tasks)} 项（上传并确认群汇报）")
+with st.container(horizontal=True, gap="small", key="summary"):
+    st.metric("计划", f"{len(tasks):02d}")
+    st.metric("已上传", f"{uploaded:02d}")
+    st.metric("待群报", f"{uploaded - completed:02d}")
+    st.metric("已完成", f"{completed:02d}")
+st.progress(completed / len(tasks), text=f"{observation_date} · 已完成 {completed} / {len(tasks)} 项")
 
 if view == "观测任务":
-    plan, updates = st.columns([3.2, 1], gap="large")
-    with plan:
-        with st.container(border=True, key="plan"):
-            st.subheader("整点观测计划")
-            st.caption("完成观测后，点击对应任务上传材料。CTD与气象同步提交。")
-            headers = st.columns([0.7, 1.25, 1.25, 1.25])
-            for col, title, frequency in zip(headers, ["观测时刻", "CTD / 气象", "盐度 / pH", "生物拖网"], ["", "每小时", "每小时", "每3小时"]):
-                col.markdown(f"**{title}**")
-                if frequency:
-                    col.caption(frequency)
-            for hour in range(2, 9):
-                st.divider()
-                cols = st.columns([0.7, 1.25, 1.25, 1.25], vertical_alignment="center")
-                cols[0].markdown(f"**{hour:02d}:00**")
-                if hour == 6:
-                    cols[0].caption("后班开始")
-                for col, project in zip(cols[1:], PROJECTS):
-                    task_id = f"{project}_{hour:02d}"
-                    task = TASK_BY_ID.get(task_id)
-                    if not task:
-                        col.caption("—")
-                        continue
-                    if group_filter and task.group != group_filter:
-                        col.caption(f"{task.group}组负责")
-                        continue
-                    status = task_status(latest.get(task_id))
-                    icon = {"待上传": ":material/upload_file:", "待群报": ":material/chat_bubble:", "已完成": ":material/check_circle:"}[status]
-                    col.button(f"{task.group}组 · {status}", key=f"task_{task_id}", icon=icon, width="stretch",
-                        help=f"{task.time} · {task.title} · {GROUPS[task.group]['leader']}组", on_click=open_task, args=(task_id,))
-            st.divider()
-            st.caption("● 1、2组 02:00—05:30　　● 3、4组 05:20—08:00")
-    with updates:
-        with st.container(border=True):
-            st.subheader("最新提交")
-            recent = sorted((r for key, r in latest.items() if TASK_BY_ID[key] in tasks), key=lambda r: r["sequence"], reverse=True)[:5]
-            if not recent:
-                st.caption("等待第一份海上观测材料。")
-                st.markdown(":material/water: **让数据跟上每一次出海。**")
-            for record in recent:
-                task = TASK_BY_ID[record["task_id"]]
-                st.markdown(f"**{task.time} · {PROJECTS[task.project]}**")
-                st.caption(f"{task.group}组 · {record['reporter']} · {len(record['files'])}个文件")
-                st.caption(task_status(record))
-                st.button("查看材料与汇报", key=f"recent_{record['id']}", on_click=open_task, args=(task.id,), width="stretch")
-                st.divider()
-        with st.container(border=True):
-            st.markdown("**05:20—05:30 交接**")
-            st.caption("前班留几名人员，后班05:20到岗。交清仪器、数据、样品和未完成事项。")
-            st.caption("08:00仍安排最后一轮测量与第3次拖网。")
+    with st.container(key="task_heading"):
+        title, refresh = st.columns([3, 1], vertical_alignment="center", wrap=False)
+        title.subheader("整点观测计划")
+        if refresh.button("刷新", key="refresh_progress", width="stretch", wrap=True):
+            st.rerun()
+    st.caption("点选项目上传材料，保存后复制文字到群里汇报。")
+    hours = sorted({task.hour for task in tasks})
+    with st.container(key="plan"):
+        for offset in range(0, len(hours), 3):
+            columns = st.columns(3, gap="medium")
+            for column, hour in zip(columns, hours[offset:offset + 3]):
+                hour_tasks = [task for task in tasks if task.hour == hour]
+                with column, st.container(border=True, height="stretch", gap="xsmall", key=f"hour_{hour:02d}"):
+                    st.markdown(f"### {hour:02d}:00")
+                    done = sum(bool(latest.get(task.id, {}).get("reported_at")) for task in hour_tasks)
+                    st.caption(f"{'前班' if hour <= 5 else '后班'} · {done}/{len(hour_tasks)} 项完成")
+                    for task in hour_tasks:
+                        status = task_status(latest.get(task.id))
+                        icon = {"待上传": ":material/upload_file:", "待群报": ":material/chat_bubble:", "已完成": ":material/check_circle:"}[status]
+                        title = {"ctd": "CTD＋同步气象", "water": "盐度 / pH", "trawl": f"生物拖网 · 第{task.round}次"}[task.project]
+                        st.button(f"{title}　{task.group}组 · {status}", key=f"task_{task.id}", icon=icon,
+                            width="stretch", wrap=True, on_click=open_task, args=(task.id,))
+    st.caption("05:20—05:30交接：1组→3组，2组→4组。08:00完成最后一轮测量和第三次拖网。")
+    recent = sorted((r for key, r in latest.items() if TASK_BY_ID[key] in tasks), key=lambda r: r["sequence"], reverse=True)[:5]
+    with st.expander(f"最新提交 · {len(recent)} 条"):
+        if not recent:
+            st.caption("当前日期还没有提交材料。")
+        for record in recent:
+            task = TASK_BY_ID[record["task_id"]]
+            st.caption(f"{task.group}组 · {record['reporter']} · {len(record['files'])}个文件")
+            st.button(f"{task.time} · {PROJECTS[task.project]} · {task_status(record)}", key=f"recent_{record['id']}",
+                on_click=open_task, args=(task.id,), width="stretch", wrap=True)
 
 elif view == "数据资料库":
     st.subheader("数据资料库")
@@ -240,7 +214,7 @@ elif view == "数据资料库":
                 st.markdown(f"**{html.escape(file['name'])}**")
                 st.caption(f"{category} · {file['size'] / 1024:.1f} KB")
                 try:
-                    st.download_button("下载文件", data=store.read_file(file), file_name=file["name"], mime="application/octet-stream", key=f"file_{file['id']}", icon=":material/download:")
+                    st.download_button("下载文件", data=store.read_file(file), file_name=file["name"], mime="application/octet-stream", key=f"file_{file['id']}", icon=":material/download:", width="stretch")
                 except (OSError, ValueError) as exc:
                     st.error(f"文件暂不可读：{exc}")
             if st.button("打包本条提交", icon=":material/folder_zip:", key=f"bundle_{chosen}"):
@@ -275,6 +249,10 @@ else:
     st.markdown("**交接内容：** 仪器状态、材料保存、样品编号、异常情况和未完成事项。")
     st.caption("频次：CTD＋同步气象7轮；盐度/pH7轮；生物拖网02:00、05:00、08:00各1次。")
 
-st.caption("东方红2 · 海上观测协作站　/　每一份材料，都来自真实的观测。")
+with st.expander("材料保存位置"):
+    st.caption(store.storage_label)
+    if store.repository_url:
+        st.link_button("打开GitHub数据分支", store.repository_url, icon=":material/cloud:", width="stretch")
+st.caption("D海研学队 · 东方红2海上观测协作站")
 if st.session_state.dialog_task:
     upload_dialog(st.session_state.dialog_task, observation_date)

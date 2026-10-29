@@ -18,8 +18,8 @@ baseRadius = "12px"
 buttonRadius = "8px"
 showSidebarBorder = false
 headingFontWeights = [650, 650, 600, 600, 600, 600]
-paddingTop = "1.5rem"
-paddingBottom = "2rem"
+paddingTop = "0.5rem"
+paddingBottom = "0.5rem"
 
 [theme.sidebar]
 backgroundColor = "#0d2d42"
