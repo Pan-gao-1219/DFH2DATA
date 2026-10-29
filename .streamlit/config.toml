@@ -1,0 +1,32 @@
+[server]
+headless = true
+maxUploadSize = 100
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#246c77"
+backgroundColor = "#f4f7f8"
+secondaryBackgroundColor = "#eef3f5"
+textColor = "#203b47"
+borderColor = "#e1e8ec"
+font = "sans-serif"
+baseRadius = "12px"
+buttonRadius = "8px"
+showSidebarBorder = false
+headingFontWeights = [650, 650, 600, 600, 600, 600]
+paddingTop = "1.5rem"
+paddingBottom = "2rem"
+
+[theme.sidebar]
+backgroundColor = "#0d2d42"
+secondaryBackgroundColor = "#173d50"
+textColor = "#e2edf1"
+primaryColor = "#8ed0c5"
+borderColor = "#315466"
+linkColor = "#a6ddd3"
+blueTextColor = "#c5e6ef"
+blueBackgroundColor = "#173d50"

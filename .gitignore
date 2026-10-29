@@ -1,0 +1,9 @@
+.venv/
+data/
+__pycache__/
+.pytest_cache/
+.streamlit/secrets.toml
+.env
+*.log
+qa-output/
+*.zip

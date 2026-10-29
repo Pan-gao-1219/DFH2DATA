@@ -1,0 +1,22 @@
+/* The supplied ship photograph is the visual focus; controls stay native Streamlit. */
+.intro-screen{position:fixed;inset:0;z-index:999999;background:#faf8f4;display:flex;align-items:center;justify-content:center;opacity:1;animation:intro-fade .85s ease-in-out 1s forwards;}
+.intro-screen img{display:block;width:100%;height:100%;object-fit:contain;}
+@keyframes intro-fade{from{opacity:1;visibility:visible;}to{opacity:0;visibility:hidden;}}
+@media(prefers-reduced-motion:reduce){.intro-screen{animation-duration:.01s;}}
+.hero{background-color:#0b263d;background-size:cover;background-position:center 57%;border-radius:20px;padding:46px 48px;min-height:330px;box-sizing:border-box;margin:0 0 24px;overflow:hidden;color:#fff;}
+.hero .eyebrow{color:#c6e5e7;font-size:11px;font-weight:600;letter-spacing:3px;margin-bottom:22px;}
+.hero h1{color:#fff;font-size:clamp(25px,3vw,40px);font-weight:650;line-height:1.5;letter-spacing:1px;margin:0 0 10px;padding:0;}
+.hero p{color:#e3ebed;font-size:15px;margin:8px 0 24px;letter-spacing:2px;}
+.hero-tags{display:flex;gap:10px;flex-wrap:wrap;}
+.hero-tags span{font-size:11px;letter-spacing:1px;padding:6px 12px;border:1px solid #ffffff45;border-radius:30px;color:#e8f0f3;background:#071e3130;}
+[data-testid="stMetric"]{background:#fff;border-color:#e2e9ec!important;border-radius:14px;padding:18px 22px!important;}
+[data-testid="stMetricLabel"]{color:#758a93;letter-spacing:.5px;}
+[data-testid="stMetricValue"]{color:#13384b;}
+.st-key-plan{background:#fff;border-radius:18px!important;padding:24px!important;}
+.st-key-plan hr{margin:8px 0!important;}
+[class*="st-key-task_ctd_"] button{background:#edf4f9;color:#427397;border-color:transparent;font-size:14px;}
+[class*="st-key-task_water_"] button{background:#ebf5f0;color:#397f69;border-color:transparent;font-size:14px;}
+[class*="st-key-task_trawl_"] button{background:#fcf2e7;color:#a87331;border-color:transparent;font-size:14px;}
+[class*="st-key-task_"] button:hover{filter:brightness(.96);border-color:currentColor;}
+[data-testid="stSidebar"] [data-testid="stInfo"]{border:1px solid #93b6c044;background:#123b50;color:#deedf2;}
+@media(max-width:768px){.hero{min-height:290px;padding:30px 24px;background-position:56% center;}.hero .eyebrow{font-size:9px;letter-spacing:1.5px;}.hero h1{font-size:26px;}.hero p{font-size:13px;}.st-key-plan{padding:14px!important;}.st-key-plan [data-testid="stHorizontalBlock"]{flex-wrap:nowrap!important;gap:7px!important;}.st-key-plan [data-testid="stColumn"]{min-width:0!important;flex:1 1 0!important;}.st-key-plan [data-testid="stColumn"]:first-child{flex:.6 1 0!important;}.st-key-plan button{padding:6px 4px;min-height:48px;}.st-key-plan button p{font-size:11px;}.st-key-plan [data-testid="stIconMaterial"]{display:none;}.st-key-plan p{font-size:12px;}[data-testid="stMetric"]{padding:12px!important;}}

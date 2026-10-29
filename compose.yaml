@@ -1,0 +1,10 @@
+services:
+  observations:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - marine-data:/data
+    restart: unless-stopped
+volumes:
+  marine-data:
