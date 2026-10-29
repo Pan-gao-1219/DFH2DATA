@@ -1,0 +1,35 @@
+{
+  "id": "12b341f3-7a25-448a-8f7c-7cecc4726022",
+  "observation_date": "2026-10-30",
+  "task_id": "ctd_02",
+  "reporter": "潘高",
+  "actual_time": "02:00",
+  "station": "",
+  "notes": "好帅",
+  "created_at": "2026-10-30T00:08:04+08:00",
+  "reported_at": null,
+  "reported_by": null,
+  "files": [
+    {
+      "id": "f383279a-1851-4b6f-9646-646a3bb8ecb5",
+      "submission_id": "12b341f3-7a25-448a-8f7c-7cecc4726022",
+      "name": "微信图片_20260926222410_4946_1841.png",
+      "category": "ctd",
+      "relative_path": "uploads/2026-10-30/ctd_02/12b341f3-7a25-448a-8f7c-7cecc4726022/ctd/01_微信图片_20260926222410_4946_1841.png",
+      "blob_sha": "98c277955e81bdfd0eb2f8b8afaf7bf9e9a94a49",
+      "size": 1601419,
+      "sha256": "a65fffea2b4baa686acfc164a5240ff3bb3566c29de1ee49392d2417dc46f49d"
+    },
+    {
+      "id": "d21f7e41-0620-460c-99f5-e34dd47cdfad",
+      "submission_id": "12b341f3-7a25-448a-8f7c-7cecc4726022",
+      "name": "微信图片_20261026185409_69_2489.png",
+      "category": "weather",
+      "relative_path": "uploads/2026-10-30/ctd_02/12b341f3-7a25-448a-8f7c-7cecc4726022/weather/02_微信图片_20261026185409_69_2489.png",
+      "blob_sha": "6d2f536c3f39b8ccf2fa61077dce64120c807a0e",
+      "size": 6799958,
+      "sha256": "25e9396288da11388f03583c9210968f39d1171a6597d814deca1eb6a13ff2ce"
+    }
+  ],
+  "sequence": 1
+}
