@@ -1,0 +1,25 @@
+{
+  "id": "3c09bf20-595a-48d4-8530-4a5c68d0d810",
+  "observation_date": "2026-10-30",
+  "task_id": "trawl_02",
+  "reporter": "余怡晗",
+  "actual_time": "16:00",
+  "station": "",
+  "notes": "",
+  "created_at": "2026-10-30T16:00:25+08:00",
+  "reported_at": null,
+  "reported_by": null,
+  "files": [
+    {
+      "id": "c8484364-e216-4fd4-9b70-1671ca1e744e",
+      "submission_id": "3c09bf20-595a-48d4-8530-4a5c68d0d810",
+      "name": "IMG_9812.jpeg",
+      "category": "data",
+      "relative_path": "uploads/2026-10-30/trawl_02/3c09bf20-595a-48d4-8530-4a5c68d0d810/data/01_IMG_9812.jpeg",
+      "blob_sha": "1c51d164037909f0b6ccfc6190a4b2ab5ae149a5",
+      "size": 3152854,
+      "sha256": "2e7a767a749f2de37c1cc6086847dd51e7a8a3085c49bc33fb7a6a0802b9b928"
+    }
+  ],
+  "sequence": 4
+}
