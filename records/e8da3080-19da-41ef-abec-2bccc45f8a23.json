@@ -1,0 +1,25 @@
+{
+  "id": "e8da3080-19da-41ef-abec-2bccc45f8a23",
+  "observation_date": "2026-10-30",
+  "task_id": "weather_02",
+  "reporter": "马刚",
+  "actual_time": "02:00",
+  "station": "",
+  "notes": "",
+  "created_at": "2026-10-30T14:45:58+08:00",
+  "reported_at": null,
+  "reported_by": null,
+  "files": [
+    {
+      "id": "acca4cb4-e6a1-4114-8fa9-2869c1b16974",
+      "submission_id": "e8da3080-19da-41ef-abec-2bccc45f8a23",
+      "name": "IMG_20261030_142426.jpg",
+      "category": "weather",
+      "relative_path": "uploads/2026-10-30/weather_02/e8da3080-19da-41ef-abec-2bccc45f8a23/weather/01_IMG_20261030_142426.jpg",
+      "blob_sha": "a82d79fd1ac22b7dccd51c97e4688b8ba9f995d9",
+      "size": 4479276,
+      "sha256": "bcd43e9d8cb31c733b1aced3750b2d78d9da9ea2469fa67128e4e7c8ffbddf60"
+    }
+  ],
+  "sequence": 2
+}
