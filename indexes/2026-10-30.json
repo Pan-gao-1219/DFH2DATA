@@ -223,5 +223,30 @@
       }
     ],
     "sequence": 9
+  },
+  {
+    "id": "ce933e54-38be-4cf8-ae34-7aff62de1a85",
+    "observation_date": "2026-10-30",
+    "task_id": "ctd_07",
+    "reporter": "王鹏瑞",
+    "actual_time": "07:00",
+    "station": "",
+    "notes": "",
+    "created_at": "2026-10-30T19:20:15+08:00",
+    "reported_at": null,
+    "reported_by": null,
+    "files": [
+      {
+        "id": "3fb9fdfb-e86e-4ec5-91b8-bfe94b304909",
+        "submission_id": "ce933e54-38be-4cf8-ae34-7aff62de1a85",
+        "name": "IMG_20261030_191241.jpg",
+        "category": "ctd",
+        "relative_path": "uploads/2026-10-30/ctd_07/ce933e54-38be-4cf8-ae34-7aff62de1a85/ctd/01_IMG_20261030_191241.jpg",
+        "blob_sha": "90d69ad7ff45138e41d54f9962f52187ba03e47d",
+        "size": 4778613,
+        "sha256": "c3f250e895e5756593fdfb2675cfcbe6d8a4588e4b3eb4a180ef97bb23f86f3f"
+      }
+    ],
+    "sequence": 10
   }
 ]
