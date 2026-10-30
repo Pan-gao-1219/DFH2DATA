@@ -142,14 +142,25 @@ def test_remote_retry_is_idempotent_and_revisions_preserve_history(remote):
 
 def test_ctd_validation_and_readonly_mode_do_not_write(remote):
     store, api = remote
-    with pytest.raises(ValueError, match="同时上传"):
-        submit(store, "ctd_02", reporter="马刚", files=[("cast.cnv", b"CTD", "ctd")])
+    with pytest.raises(ValueError, match="单独"):
+        submit(store, "ctd_02", reporter="马刚", files=[("cast.cnv", b"CTD", "ctd"), ("weather.csv", b"weather", "weather")])
     assert api.head is None
     api.can_write = False
     readonly = GitHubStore("owner/data", client=api)
     with pytest.raises(ValueError, match="令牌"):
         submit(readonly)
     assert not api.blobs
+
+
+def test_github_saves_ctd_and_weather_in_separate_task_records(remote):
+    store, api = remote
+    ctd = submit(store, "ctd_03", reporter="马刚", files=[("cast.cnv", b"CTD", "ctd")])
+    assert set(store.latest("2026-10-30")) == {"ctd_03"}
+    weather = submit(store, "weather_03", reporter="马刚", files=[("weather.csv", b"weather", "weather")])
+    reopened = GitHubStore("owner/data", client=api)
+    assert set(reopened.latest("2026-10-30")) == {"ctd_03", "weather_03"}
+    assert len(reopened.get(ctd["id"])["files"]) == 1
+    assert reopened.read_file(reopened.get(weather["id"])["files"][0]) == b"weather"
 
 
 def test_checksum_detects_damaged_remote_material(remote):

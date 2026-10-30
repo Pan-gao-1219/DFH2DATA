@@ -83,13 +83,19 @@ def upload_dialog(task_id, observation_date):
         c1, c2 = st.columns(2)
         actual = c1.time_input("实际完成时间", value=time(task.hour), step=60)
         station = c2.text_input("站位 / 样品编号（选填）", max_chars=120)
-        if task.project == "ctd":
-            st.caption("CTD与气象同步测量，两类材料都需要提交。合并文件可分别选择同一份。")
-            ctd = st.file_uploader("CTD原始数据与记录", accept_multiple_files=True, max_upload_size=100, key=f"ctd_files_{nonce}")
-            weather = st.file_uploader("同步气象数据与记录", accept_multiple_files=True, max_upload_size=100, key=f"weather_files_{nonce}")
-            uploads = [(file, "ctd") for file in ctd] + [(file, "weather") for file in weather]
+        if task.project in {"ctd", "weather"}:
+            st.caption("CTD与气象在同一整点同步测量，材料通过各自入口分别提交。")
+            label = "CTD原始数据与记录" if task.project == "ctd" else "气象观测数据与记录"
+            uploads = [(file, task.project) for file in st.file_uploader(label, accept_multiple_files=True, max_upload_size=100, key=f"{task.project}_files_{nonce}")]
         else:
-            label = "盐度 / pH测量数据与记录" if task.project == "water" else f"第{task.round}次拖网数据、样品记录与照片"
+            if task.project == "water":
+                label = "盐度 / pH测量数据与记录"
+            elif task.requires_sampling:
+                st.caption(f"本时刻需要生物观测和第{task.round}次拖网取样，完成后合并为本小时的一次提交。")
+                label = "生物观测、拖网取样记录与照片"
+            else:
+                st.caption("本时刻仅做生物观测，无需取样；仍需提交本小时的观测材料。")
+                label = "本小时生物观测记录与照片"
             uploads = [(file, "data") for file in st.file_uploader(label, accept_multiple_files=True, max_upload_size=100, key=f"data_files_{nonce}")]
         notes = st.text_area("备注（选填）", max_chars=2000, placeholder="异常情况、样品说明或需要交接的事项")
         st.caption("支持仪器原始文件、表格、文档、照片和压缩包。每次最多20个，单个100MB，总计250MB。")
@@ -125,7 +131,7 @@ st.html(f"""<section class="hero" style="{photo_style}">
     <div class="eyebrow">DONG FANG HONG 2 &nbsp; / &nbsp; FIELD OBSERVATIONS</div>
     <h1>同舟探海，向海求知。</h1>
     <p>D海研学队 · 东方红2观测协作站</p>
-    <div class="hero-tags"><span>02:00 — 08:00</span><span>4个小组</span><span>17项作业</span></div>
+    <div class="hero-tags"><span>02:00 — 08:00</span><span>4个小组</span><span>{len(TASKS)}项作业</span></div>
     </section>""")
 
 with st.container(key="filters"):
@@ -163,7 +169,7 @@ if view == "观测任务":
         title.subheader("整点观测计划")
         if refresh.button("刷新", key="refresh_progress", width="stretch", wrap=True):
             st.rerun()
-    st.caption("点选项目上传材料，保存后复制文字到群里汇报。")
+    st.caption("每小时四项分别提交。CTD与气象同步测量；生物每小时观测，02:00、05:00、08:00加做取样。")
     hours = sorted({task.hour for task in tasks})
     with st.container(key="plan"):
         for offset in range(0, len(hours), 3):
@@ -177,7 +183,8 @@ if view == "观测任务":
                     for task in hour_tasks:
                         status = task_status(latest.get(task.id))
                         icon = {"待上传": ":material/upload_file:", "待群报": ":material/chat_bubble:", "已完成": ":material/check_circle:"}[status]
-                        title = {"ctd": "CTD＋同步气象", "water": "盐度 / pH", "trawl": f"生物拖网 · 第{task.round}次"}[task.project]
+                        biology_title = f"生物观测＋取样 · 第{task.round}次" if task.requires_sampling else "生物观测（不取样）"
+                        title = {"ctd": "CTD测量", "weather": "气象观测", "water": "盐度 / pH", "trawl": biology_title}[task.project]
                         st.button(f"{title}　{task.group}组 · {status}", key=f"task_{task.id}", icon=icon,
                             width="stretch", wrap=True, on_click=open_task, args=(task.id,))
     st.caption("05:20—05:30交接：1组→3组，2组→4组。08:00完成最后一轮测量和第三次拖网。")
@@ -247,7 +254,7 @@ else:
             st.markdown("、".join(info["members"]))
     st.info("05:20开始交接，05:30交接完成。1组交给3组；2组交给4组。05:00任务由前班完成，06:00起由后班负责。", icon=":material/swap_horiz:")
     st.markdown("**交接内容：** 仪器状态、材料保存、样品编号、异常情况和未完成事项。")
-    st.caption("频次：CTD＋同步气象7轮；盐度/pH7轮；生物拖网02:00、05:00、08:00各1次。")
+    st.caption("CTD、气象、盐度/pH、生物观测各7轮，均每小时分别提交。生物拖网取样在02:00、05:00、08:00，共3次。")
 
 with st.expander("材料保存位置"):
     st.caption(store.storage_label)

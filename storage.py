@@ -41,9 +41,11 @@ def validate_submission(observation_date, task_id, reporter, actual_time, statio
         total += len(content)
     if total > MAX_SUBMISSION_BYTES:
         raise ValueError("本次材料总大小超过250MB，请分批整理后重新提交。")
-    if task.project == "ctd" and categories != {"ctd", "weather"}:
-        raise ValueError("请同时上传CTD材料和同步气象材料。")
-    if task.project != "ctd" and categories != {"data"}:
+    if task.project == "ctd" and categories != {"ctd"}:
+        raise ValueError("CTD材料请单独提交；气象材料请在同一时刻的气象入口上传。")
+    if task.project == "weather" and categories != {"weather"}:
+        raise ValueError("气象材料请单独提交；CTD材料请在同一时刻的CTD入口上传。")
+    if task.project not in {"ctd", "weather"} and categories != {"data"}:
         raise ValueError("材料分类与当前任务不符。")
     return str(uuid.UUID(submission_id)) if submission_id else str(uuid.uuid4())
 

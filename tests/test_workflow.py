@@ -28,9 +28,12 @@ def submit(store, task_id="water_02", **changes):
 
 
 def test_confirmed_schedule():
-    assert len(TASKS) == 17
-    assert len({t.id for t in TASKS}) == 17
-    assert [t.hour for t in TASKS if t.project == "trawl"] == [2, 5, 8]
+    assert len(TASKS) == 28
+    assert len({t.id for t in TASKS}) == 28
+    assert all(len([t for t in TASKS if t.project == project]) == 7 for project in ("ctd", "weather", "water", "trawl"))
+    assert [t.hour for t in TASKS if t.requires_sampling] == [2, 5, 8]
+    assert [t.round for t in TASKS if t.project == "trawl"] == [1, 0, 0, 2, 0, 0, 3]
+    assert all(TASK_BY_ID[f"weather_{h:02}"].group == TASK_BY_ID[f"ctd_{h:02}"].group for h in range(2, 9))
     assert [(TASK_BY_ID[f"ctd_{h:02}"].group, TASK_BY_ID[f"water_{h:02}"].group) for h in range(2, 9)] == [(1, 2)] * 4 + [(3, 4)] * 3
     assert sum(len(group["members"]) for group in GROUPS.values()) == 24
     assert all(t.hour not in (5.2, 5.3) for t in TASKS)
@@ -48,12 +51,24 @@ def test_upload_survives_new_connection_and_report_is_separate(store):
     assert store.latest("2026-10-31") == {}
 
 
-def test_ctd_requires_both_synchronous_materials(store):
-    with pytest.raises(ValueError, match="同时上传"):
-        submit(store, "ctd_02", files=[("cast.cnv", b"CTD", "ctd")])
+def test_ctd_and_weather_are_independent_submissions(store):
+    with pytest.raises(ValueError, match="单独"):
+        submit(store, "ctd_02", files=[("cast.cnv", b"CTD", "ctd"), ("气象.csv", b"weather", "weather")])
     assert store.list_records("2026-10-30") == []
-    row = submit(store, "ctd_02", files=[("cast.cnv", b"CTD", "ctd"), ("气象.csv", b"weather", "weather")])
-    assert len(row["files"]) == 2
+    ctd = submit(store, "ctd_02", files=[("cast.cnv", b"CTD", "ctd")])
+    assert set(store.latest("2026-10-30")) == {"ctd_02"}
+    weather = submit(store, "weather_02", files=[("气象.csv", b"weather", "weather")])
+    store.mark_reported(ctd["id"], "马刚")
+    assert task_status(store.get(ctd["id"])) == "已完成"
+    assert task_status(store.get(weather["id"])) == "待群报"
+    assert store.read_file(weather["files"][0]) == b"weather"
+
+
+def test_biology_observation_without_sampling_can_be_saved(store):
+    row = submit(store, "trawl_03", files=[("生物观测.txt", b"hourly observation", "data")])
+    assert "不取样" in report_text(row)
+    assert "第0次" not in report_text(row)
+    assert store.latest("2026-10-30")["trawl_03"]["id"] == row["id"]
 
 
 @pytest.mark.parametrize("files", [[], [("empty.csv", b"", "data")]])
@@ -119,13 +134,13 @@ def test_dashboard_filter_and_upload_form(tmp_path, monkeypatch):
     monkeypatch.setenv("MARINE_DATA_DIR", str(tmp_path / "ui"))
     app = AppTest.from_file(str(Path(__file__).parents[1] / "streamlit_app.py"), default_timeout=20).run()
     assert not app.exception
-    assert app.metric[0].value == "17"
+    assert app.metric[0].value == "28"
     assert any('class="intro-screen"' in item.value for item in app.html)
-    assert len([button for button in app.button if button.key and button.key.startswith("task_")]) == 17
+    assert len([button for button in app.button if button.key and button.key.startswith("task_")]) == 28
     app.selectbox(key="group_filter").select(4).run()
     assert not app.exception
     assert not any('class="intro-screen"' in item.value for item in app.html)
-    assert app.metric[0].value == "04"
+    assert app.metric[0].value == "06"
     app.button(key="task_water_06").click().run()
     assert not app.exception
     assert len(app.get("file_uploader")) == 1
@@ -152,3 +167,21 @@ def test_library_and_report_confirmation(tmp_path, monkeypatch):
     assert not app.exception
     assert app.metric[3].value == "01"
     assert store.get(row["id"])["reported_at"]
+
+
+@pytest.mark.parametrize("task_id,expected_label", [
+    ("trawl_03", "本小时生物观测记录与照片"),
+    ("trawl_05", "生物观测、拖网取样记录与照片"),
+    ("ctd_03", "CTD原始数据与记录"),
+    ("weather_03", "气象观测数据与记录"),
+])
+def test_hourly_upload_forms_match_their_own_work(task_id, expected_label, tmp_path, monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    monkeypatch.setenv("MARINE_STORAGE", "local")
+    monkeypatch.setenv("MARINE_DATA_DIR", str(tmp_path / "ui"))
+    app = AppTest.from_file(str(Path(__file__).parents[1] / "streamlit_app.py"), default_timeout=20).run()
+    app.button(key=f"task_{task_id}").click().run()
+    assert not app.exception
+    uploaders = app.get("file_uploader")
+    assert len(uploaders) == 1
+    assert uploaders[0].proto.label == expected_label

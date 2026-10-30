@@ -22,6 +22,7 @@
 [class*="st-key-task_"] button{min-height:48px;justify-content:flex-start;padding:11px 12px;border-radius:10px;}
 [class*="st-key-task_"] button p{white-space:normal!important;text-overflow:clip!important;overflow-wrap:anywhere;line-height:1.5;text-align:left;font-size:14px;}
 [class*="st-key-task_ctd_"] button{background:#edf4f9;color:#356a90;border-color:#dce9f2;}
+[class*="st-key-task_weather_"] button{background:#eff0fa;color:#5f6492;border-color:#e1e3f2;}
 [class*="st-key-task_water_"] button{background:#ebf5f0;color:#2d735f;border-color:#dcece4;}
 [class*="st-key-task_trawl_"] button{background:#fcf2e7;color:#966023;border-color:#f4e6d6;}
 [class*="st-key-task_"] button:hover{filter:brightness(.97);border-color:currentColor;}
