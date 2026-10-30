@@ -1,0 +1,25 @@
+{
+  "id": "5ed685ed-2617-4910-853d-3d9b1e4482f8",
+  "observation_date": "2026-10-30",
+  "task_id": "ctd_06",
+  "reporter": "王鹏瑞",
+  "actual_time": "06:00",
+  "station": "",
+  "notes": "",
+  "created_at": "2026-10-30T19:18:48+08:00",
+  "reported_at": null,
+  "reported_by": null,
+  "files": [
+    {
+      "id": "25e63f90-99ff-4535-9f04-eff586b77467",
+      "submission_id": "5ed685ed-2617-4910-853d-3d9b1e4482f8",
+      "name": "IMG_20261030_181838.jpg",
+      "category": "ctd",
+      "relative_path": "uploads/2026-10-30/ctd_06/5ed685ed-2617-4910-853d-3d9b1e4482f8/ctd/01_IMG_20261030_181838.jpg",
+      "blob_sha": "5b53227d0ea6e39d657a1fd161dc5100fad428be",
+      "size": 4878274,
+      "sha256": "04c51e0c3b4f507811d1b7f19329caf485fcf53bd7e1f5fc3a093540f2251fca"
+    }
+  ],
+  "sequence": 9
+}
