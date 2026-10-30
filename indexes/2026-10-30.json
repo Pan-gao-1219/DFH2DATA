@@ -98,5 +98,30 @@
       }
     ],
     "sequence": 4
+  },
+  {
+    "id": "e503bdef-ab8b-4e66-bf11-fdab988d6caf",
+    "observation_date": "2026-10-30",
+    "task_id": "water_02",
+    "reporter": "郭堃晖",
+    "actual_time": "02:00",
+    "station": "",
+    "notes": "",
+    "created_at": "2026-10-30T17:34:14+08:00",
+    "reported_at": null,
+    "reported_by": null,
+    "files": [
+      {
+        "id": "19caeb7c-d13d-41ca-a45d-c75f184731ae",
+        "submission_id": "e503bdef-ab8b-4e66-bf11-fdab988d6caf",
+        "name": "IMG_4368.jpeg",
+        "category": "data",
+        "relative_path": "uploads/2026-10-30/water_02/e503bdef-ab8b-4e66-bf11-fdab988d6caf/data/01_IMG_4368.jpeg",
+        "blob_sha": "696f6fb3fa9357882bc61ef5ac03f512bace33f1",
+        "size": 1755136,
+        "sha256": "781a9ba1dd1015fcb17aabee79201e7e5d34bca4dcf1738d59875aa9c2a422cb"
+      }
+    ],
+    "sequence": 5
   }
 ]
